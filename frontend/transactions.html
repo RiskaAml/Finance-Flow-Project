@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Transaction Management</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#6467f2",
+              "primary-hover": "#5457d1",
+              "background-dark": "#0f172a" /* Deep Slate Blue */,
+              "background-card": "#1e293b" /* Lighter Slate */,
+              "glass-border": "rgba(255, 255, 255, 0.08)",
+              "glass-bg": "rgba(30, 41, 59, 0.7)",
+              success: "#10b981",
+              danger: "#ef4444",
+              warning: "#f59e0b",
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              display: ["Outfit", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            boxShadow: {
+              glow: "0 0 20px rgba(100, 103, 242, 0.15)",
+            },
+          },
+        },
+      };
+    </script>
+    <script>
+      async function loadTransactions() {
+        try {
+          const res = await fetch("http://localhost:5000/api/transactions");
+          const transactions = await res.json();
+          const tbody = document.getElementById("transactionList");
+
+          tbody.innerHTML = "";
+
+          transactions.forEach((tx) => {
+            const amountFormatted = Number(tx.amount).toLocaleString("id-ID", {
+              style: "currency",
+              currency: tx.currency || "IDR",
+            });
+
+            const formattedDate = new Date(tx.date).toLocaleDateString(
+              "id-ID",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }
+            );
+
+            const row = `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="p-4">
+              <input type="checkbox" class="w-4 h-4 rounded border-gray-600 bg-[#282839] cursor-pointer" />
+            </td>
+
+            <td class="p-4 font-mono text-gray-300">${formattedDate}</td>
+
+            <td class="p-4 font-medium ${
+              tx.type === "Income" ? "text-emerald-400" : "text-red-400"
+            }">
+              ${tx.type}
+            </td>
+
+            <td class="p-4">
+              <div class="flex flex-col">
+                <span class="font-medium text-white truncate">${
+                  tx.party || "-"
+                }</span>
+                <span class="text-xs text-gray-500 truncate">${
+                  tx.description || "-"
+                }</span>
+              </div>
+            </td>
+
+            <td class="p-4 text-gray-300">${tx.category || "-"}</td>
+
+            <td class="p-4">
+              <span class="px-2 py-1 text-xs rounded-lg 
+                ${
+                  tx.status === "Pending"
+                    ? "bg-amber-500/10 text-amber-400"
+                    : tx.status === "Completed"
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : "bg-red-500/10 text-red-400"
+                }">
+                ${tx.status}
+              </span>
+            </td>
+
+            <td class="p-4 text-right font-mono text-gray-200">${amountFormatted}</td>
+
+            <!-- 🔹 TITIK TIGA + MENU -->
+            <td class="relative p-4 text-gray-400 flex justify-end items-center">
+              <button 
+                onclick="toggleMenu('${tx.id}')" 
+                class="px-2 py-1 text-lg font-bold hover:text-white focus:outline-none"
+              >
+                ⋮
+              </button>
+
+              <div id="menu-${tx.id}"
+                class="hidden absolute right-0 top-full mt-2 w-48 bg-[#1f1f2e] border border-glass-border rounded-lg shadow-xl z-50 text-sm whitespace-nowrap">
+
+                <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                  onclick="viewDetails('${tx.id}')">👁 View Details</button>
+
+                <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                  onclick="viewReceipt('${
+                    tx.receipt_url
+                  }')">📷 View Receipt</button>
+
+                <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                  onclick="downloadReceipt('${
+                    tx.receipt_url
+                  }')">⬇ Download Receipt</button>
+
+                ${
+                  tx.status === "Pending"
+                    ? `
+                  <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                    onclick="editTransaction('${tx.id}')">✏ Edit Transaction</button>
+
+                  <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                    onclick="replaceReceipt('${tx.id}')">🖼 Replace Receipt</button>
+
+                  <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                    onclick="deleteTransaction('${tx.id}')">🗑 Delete Transaction</button>
+                `
+                    : ``
+                }
+
+                <button class="block w-full text-left px-4 py-2 hover:bg-white/10"
+                  onclick="duplicate('${
+                    tx.id
+                  }')">📑 Duplicate Transaction</button>
+              </div>
+            </td>
+          </tr>
+        `;
+
+            tbody.innerHTML += row;
+          });
+        } catch (e) {
+          console.error("Error loading transactions:", e);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadTransactions);
+
+      /* ======== MENU FUNC ======== */
+
+      function toggleMenu(id) {
+        // tutup semua menu lain
+        document.querySelectorAll("[id^='menu-']").forEach((menu) => {
+          if (menu.id !== `menu-${id}`) {
+            menu.classList.add("hidden");
+          }
+        });
+
+        // toggle menu ini
+        const menu = document.getElementById(`menu-${id}`);
+        menu.classList.toggle("hidden");
+      }
+
+      // tutup menu saat klik di luar
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("td")) {
+          document.querySelectorAll("[id^='menu-']").forEach((menu) => {
+            menu.classList.add("hidden");
+          });
+        }
+      });
+    </script>
+
+    <style>
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+
+      /* Glassmorphism Utilities */
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .glass-header {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      /* Donut Chart CSS */
+      .donut-chart {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: conic-gradient(
+          #6467f2 0% 45%,
+          #a78bfa 45% 70%,
+          #f472b6 70% 85%,
+          #94a3b8 85% 100%
+        );
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .donut-hole {
+        width: 100px;
+        height: 100px;
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 50%;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-dark text-slate-300 font-sans antialiased selection:bg-primary selection:text-white h-screen overflow-hidden flex"
+  >
+    <div class="flex h-screen w-full">
+      <!-- Side Navigation -->
+      <aside
+        class="w-72 h-full flex flex-col justify-between glass-panel border-r border-t-0 border-b-0 border-l-0 z-30 shrink-0"
+      >
+        <div class="flex flex-col gap-8 p-6">
+          <!-- Logo -->
+          <div class="flex items-center gap-3">
+            <div
+              class="size-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-glow"
+            >
+              <span class="material-symbols-outlined text-white text-[24px]"
+                >finance_chip</span
+              >
+            </div>
+            <h1
+              class="text-white text-2xl font-display font-bold tracking-tight"
+            >
+              FinanceFlow
+            </h1>
+          </div>
+          <!-- Navigation -->
+          <nav class="flex flex-col gap-2">
+            <p
+              class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2"
+            >
+              Main Menu
+            </p>
+            <a
+              class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all duration-200"
+              href="dashboard.html"
+            >
+              <span class="material-symbols-outlined text-[20px]"
+                >dashboard</span
+              >
+              <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a
+              class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/15 border border-primary/20 text-white group transition-all duration-200"
+              href="transactions.html"
+            >
+              <span
+                class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform"
+                >receipt_long</span
+              >
+              <span class="text-sm font-medium">Transactions</span>
+            </a>
+            <div class="h-px bg-white/10 my-2 mx-3"></div>
+            <a
+              class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all duration-200 group"
+              href="#"
+            >
+              <span
+                class="material-symbols-outlined text-[20px] text-purple-400 group-hover:text-purple-300"
+                >auto_awesome</span
+              >
+              <span
+                class="text-sm font-medium bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-pink-300"
+                >AI Insights</span
+              >
+            </a>
+          </nav>
+        </div>
+        <!-- Bottom Actions -->
+        <div class="p-6">
+          <div
+            class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 relative overflow-hidden group"
+          >
+            <div
+              class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"
+            >
+              <span class="material-symbols-outlined text-6xl"
+                >rocket_launch</span
+              >
+            </div>
+            <p class="text-white text-sm font-bold font-display mb-1">
+              Upgrade to Pro
+            </p>
+            <p class="text-xs text-slate-400 mb-3">
+              Unlock advanced AI analysis.
+            </p>
+            <button
+              class="w-full py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors"
+            >
+              View Plans
+            </button>
+          </div>
+          <div
+            class="flex items-center gap-3 mt-6 px-2 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+          >
+            <div
+              class="size-8 rounded-full bg-slate-700 overflow-hidden border border-white/10"
+              data-alt="User Avatar with professional look"
+              style="
+                background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBkHCJs8fio7HjuKw7rYADxRRvLNsA8kxflIQcoklpd5vqPWUdYgCFXdLvjCjAeePG_mVP7Oz2IHjA8lHpS2vq3qyMu07w6HTtRd84mnpF9XwhjZGjrnZ4gDGlLpNdzzXfALLIMDMZN5mHa2VJIRd0rTIB_QcN6rqINH3pD5UeHNxNQdUrwUfcVh9VyOvTOysSkOqz-v3Q_s2WZXF_AunPwle8DQJuzSAIFPuSUEKpFqYInsY3D2Af3cRoY0JNAGjVcpFNyAb3sp5gO');
+                background-size: cover;
+              "
+            ></div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white truncate">Alex Morgan</p>
+              <p class="text-xs text-slate-500 truncate">
+                alex@financeflow.com
+              </p>
+            </div>
+            <span class="material-symbols-outlined text-slate-500 text-[18px]"
+              >settings</span
+            >
+          </div>
+        </div>
+      </aside>
+      <!-- Main Content -->
+      <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Background glow effect -->
+        <div
+          class="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"
+        ></div>
+        <!-- Top Header -->
+        <header
+          class="flex items-center justify-between px-8 py-6 shrink-0 z-10"
+        >
+          <div class="flex flex-col gap-1">
+            <h2
+              class="font-heading text-3xl font-bold text-white tracking-tight"
+            >
+              Transactions
+            </h2>
+            <p class="text-gray-400 text-sm">
+              Manage, categorize, and approve your financial activity.
+            </p>
+          </div>
+          <div class="flex items-center gap-4">
+            <button
+              class="h-10 w-10 rounded-xl bg-surface-dark border border-glass-border flex items-center justify-center text-gray-400 hover:text-white hover:border-gray-500 transition-all relative"
+            >
+              <span
+                class="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-red-500 border border-[#1e1f30]"
+              ></span>
+              <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <a
+              href="addTransactions.html?from=transactions"
+              class="bg-primary hover:bg-primary-dark text-white text-sm font-semibold h-10 px-5 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95"
+            >
+              <span class="material-symbols-outlined text-[20px]">add</span>
+              New Transaction
+            </a>
+          </div>
+        </header>
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar z-10">
+          <!-- Stats Row -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div
+              class="glass-panel p-6 rounded-2xl flex flex-col gap-3 relative overflow-hidden group"
+            >
+              <div
+                class="absolute right-[-20px] top-[-20px] h-24 w-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"
+              ></div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400 font-medium text-sm"
+                  >Total Balance</span
+                >
+                <span
+                  class="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2 py-1 rounded-lg border border-emerald-500/20 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-[14px]"
+                    >trending_up</span
+                  >
+                  +12%
+                </span>
+              </div>
+              <span
+                class="text-3xl font-heading font-bold text-white tracking-tight"
+                >$1,240,500<span class="text-gray-500 text-xl font-normal"
+                  >.00</span
+                ></span
+              >
+            </div>
+            <div class="glass-panel p-6 rounded-2xl flex flex-col gap-3 group">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400 font-medium text-sm"
+                  >Pending Approval</span
+                >
+                <span
+                  class="bg-amber-500/10 text-amber-400 text-xs font-bold px-2 py-1 rounded-lg border border-amber-500/20 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-[14px]"
+                    >schedule</span
+                  >
+                  8 items
+                </span>
+              </div>
+              <span
+                class="text-3xl font-heading font-bold text-white tracking-tight"
+                >$45,200<span class="text-gray-500 text-xl font-normal"
+                  >.00</span
+                ></span
+              >
+            </div>
+            <div class="glass-panel p-6 rounded-2xl flex flex-col gap-3 group">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400 font-medium text-sm"
+                  >Monthly Burn</span
+                >
+                <span
+                  class="bg-rose-500/10 text-rose-400 text-xs font-bold px-2 py-1 rounded-lg border border-rose-500/20 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-[14px]"
+                    >trending_down</span
+                  >
+                  -2.4%
+                </span>
+              </div>
+              <span
+                class="text-3xl font-heading font-bold text-white tracking-tight"
+                >$120,000<span class="text-gray-500 text-xl font-normal"
+                  >.00</span
+                ></span
+              >
+            </div>
+          </div>
+          <!-- AI Insight Banner -->
+          <div
+            class="mb-8 p-4 rounded-xl bg-gradient-to-r from-primary/20 via-primary/5 to-transparent border border-primary/20 flex items-start gap-4 shadow-lg shadow-black/20"
+          >
+            <div
+              class="h-10 w-10 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/30"
+            >
+              <span class="material-symbols-outlined">auto_awesome</span>
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+              <h4 class="text-white font-semibold text-sm">
+                AI Insight Detected
+              </h4>
+              <p class="text-gray-300 text-sm leading-relaxed">
+                Spending on
+                <span class="text-white font-medium"
+                  >Software Subscriptions</span
+                >
+                is up 15% this month compared to your 6-month average. Consider
+                reviewing unused seats in AWS and Figma.
+              </p>
+            </div>
+            <button class="text-gray-400 hover:text-white p-1">
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
+          <!-- Controls -->
+          <div class="flex flex-col gap-6 mb-6">
+            <!-- Search & Tabs -->
+            <div class="flex flex-col lg:flex-row justify-between gap-4">
+              <div class="relative w-full lg:w-96 group">
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <span
+                    class="material-symbols-outlined text-gray-500 group-focus-within:text-primary transition-colors"
+                    >search</span
+                  >
+                </div>
+                <input
+                  class="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl leading-5 bg-[#282839] text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm transition-all shadow-inner"
+                  placeholder="Search by ID, Description, or Amount..."
+                  type="text"
+                />
+                <!-- Loading Spinner for Debounce (Hidden by default, can be toggled) -->
+                <div
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none opacity-0"
+                >
+                  <svg
+                    class="animate-spin h-4 w-4 text-primary"
+                    fill="none"
+                    viewbox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      fill="currentColor"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex p-1 bg-[#282839] rounded-xl self-start">
+                <button
+                  class="px-4 py-1.5 text-sm font-medium rounded-lg bg-primary text-white shadow-md transition-all"
+                >
+                  All
+                </button>
+                <button
+                  class="px-4 py-1.5 text-sm font-medium rounded-lg text-gray-400 hover:text-white transition-all"
+                >
+                  Income
+                </button>
+                <button
+                  class="px-4 py-1.5 text-sm font-medium rounded-lg text-gray-400 hover:text-white transition-all"
+                >
+                  Expenses
+                </button>
+                <button
+                  class="px-4 py-1.5 text-sm font-medium rounded-lg text-gray-400 hover:text-white transition-all"
+                >
+                  Pending
+                </button>
+              </div>
+            </div>
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-3">
+              <button
+                class="flex items-center gap-2 px-3 py-2 bg-[#282839] border border-transparent hover:border-gray-600 rounded-lg text-sm text-gray-300 transition-all"
+              >
+                <span class="material-symbols-outlined text-[18px]"
+                  >calendar_today</span
+                >
+                Date Range
+                <span
+                  class="material-symbols-outlined text-[16px] text-gray-500"
+                  >expand_more</span
+                >
+              </button>
+              <button
+                class="flex items-center gap-2 px-3 py-2 bg-[#282839] border border-transparent hover:border-gray-600 rounded-lg text-sm text-gray-300 transition-all"
+              >
+                <span class="material-symbols-outlined text-[18px]"
+                  >category</span
+                >
+                Category
+                <span
+                  class="material-symbols-outlined text-[16px] text-gray-500"
+                  >expand_more</span
+                >
+              </button>
+              <button
+                class="flex items-center gap-2 px-3 py-2 bg-[#282839] border border-transparent hover:border-gray-600 rounded-lg text-sm text-gray-300 transition-all"
+              >
+                <span class="material-symbols-outlined text-[18px]"
+                  >check_circle</span
+                >
+                Status
+                <span
+                  class="material-symbols-outlined text-[16px] text-gray-500"
+                  >expand_more</span
+                >
+              </button>
+              <button
+                class="flex items-center gap-2 px-3 py-2 bg-[#282839] border border-transparent hover:border-gray-600 rounded-lg text-sm text-gray-300 transition-all"
+              >
+                <span class="material-symbols-outlined text-[18px]"
+                  >attach_money</span
+                >
+                Amount
+                <span
+                  class="material-symbols-outlined text-[16px] text-gray-500"
+                  >expand_more</span
+                >
+              </button>
+              <button
+                class="ml-auto text-primary text-sm font-medium hover:text-primary-dark transition-colors"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
+          <!-- Data Table -->
+          <div
+            class="glass-panel rounded-2xl overflow-hidden border border-glass-border"
+          >
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-white/5 border-b border-glass-border">
+                    <th class="p-4 w-12">
+                      <input
+                        class="w-4 h-4 rounded border-gray-600 bg-[#282839] text-primary focus:ring-primary focus:ring-offset-0 focus:ring-offset-transparent cursor-pointer"
+                        type="checkbox"
+                      />
+                    </th>
+                    <th
+                      class="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                    >
+                      Date
+                    </th>
+                    <th
+                      class="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                    >
+                      Type
+                    </th>
+                    <th
+                      class="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                    >
+                      Party
+                    </th>
+                    <th
+                      class="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                    >
+                      Category
+                    </th>
+                    <th
+                      class="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="p-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right"
+                    >
+                      Amount
+                    </th>
+                    <th class="p-4 w-12"></th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="transactionList"
+                  class="divide-y divide-glass-border text-sm"
+                ></tbody>
+              </table>
+            </div>
+            <!-- Pagination -->
+            <div
+              class="flex items-center justify-between px-4 py-3 bg-white/5 border-t border-glass-border"
+            >
+              <div class="flex items-center gap-2 text-sm text-gray-400">
+                <span>Showing</span>
+                <span class="font-medium text-white">1-5</span>
+                <span>of</span>
+                <span class="font-medium text-white">245</span>
+                <span>results</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <button
+                  class="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white disabled:opacity-50"
+                  disabled=""
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button
+                  class="h-8 w-8 rounded-lg bg-primary text-white text-sm font-medium flex items-center justify-center"
+                >
+                  1
+                </button>
+                <button
+                  class="h-8 w-8 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white text-sm font-medium flex items-center justify-center"
+                >
+                  2
+                </button>
+                <button
+                  class="h-8 w-8 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white text-sm font-medium flex items-center justify-center"
+                >
+                  3
+                </button>
+                <span class="px-2 text-gray-500">...</span>
+                <button
+                  class="h-8 w-8 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white text-sm font-medium flex items-center justify-center"
+                >
+                  24
+                </button>
+                <button
+                  class="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

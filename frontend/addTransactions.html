@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Add New Transaction</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Outfit:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#6467f2",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101122",
+              "modal-bg": "#1e1e24",
+              "input-bg": "#2b2b36",
+              "input-border": "rgba(255, 255, 255, 0.1)",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              heading: ["Outfit", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "1rem",
+              xl: "1.5rem",
+              "2xl": "2rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* Custom scrollbar for textarea if needed */
+      textarea::-webkit-scrollbar {
+        width: 8px;
+      }
+      textarea::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      textarea::-webkit-scrollbar-thumb {
+        background-color: #4b4b5a;
+        border-radius: 20px;
+      }
+    </style>
+  </head>
+  <body
+    class="font-display bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4 md:p-6 overflow-hidden relative selection:bg-primary/30 selection:text-white"
+  >
+    <!-- Decorative Abstract Background Elements -->
+    <div
+      class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none"
+    >
+      <div
+        class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"
+      ></div>
+      <div
+        class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]"
+      ></div>
+    </div>
+    <!-- Modal Overlay -->
+    <div
+      class="relative w-full max-w-[800px] flex flex-col bg-modal-bg/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
+    >
+      <!-- Header -->
+      <div
+        class="flex items-center justify-between px-6 py-5 border-b border-white/5"
+      >
+        <h2
+          class="text-white font-heading text-2xl font-semibold tracking-tight"
+        >
+          Add New Transaction
+        </h2>
+        <a
+          href="transactions.html"
+          class="text-gray-400 hover:text-white transition-colors rounded-full p-1 hover:bg-white/5"
+        >
+          <span class="material-symbols-outlined text-[24px]">close</span>
+        </a>
+      </div>
+      <form
+        class="flex flex-col flex-1 overflow-y-auto max-h-[85vh]"
+        onsubmit="event.preventDefault();"
+      >
+        <div class="p-6 md:p-8 space-y-8">
+          <!-- Transaction Type Switcher -->
+          <div class="flex justify-center">
+            <div
+              class="bg-input-bg p-1.5 rounded-xl flex w-full md:w-2/3 border border-input-border"
+            >
+              <label class="flex-1 relative cursor-pointer group">
+                <input
+                  checked=""
+                  class="peer sr-only"
+                  name="transaction-type"
+                  type="radio"
+                  value="Expense"
+                />
+                <div
+                  class="w-full py-2.5 rounded-lg text-center text-sm font-medium text-gray-400 peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md transition-all duration-200 ease-out flex items-center justify-center gap-2"
+                >
+                  <span class="material-symbols-outlined text-[18px]"
+                    >trending_down</span
+                  >
+                  <span>Expense</span>
+                </div>
+              </label>
+              <label class="flex-1 relative cursor-pointer group">
+                <input
+                  class="peer sr-only"
+                  name="transaction-type"
+                  type="radio"
+                  value="Income"
+                />
+                <div
+                  class="w-full py-2.5 rounded-lg text-center text-sm font-medium text-gray-400 peer-checked:bg-green-600 peer-checked:text-white peer-checked:shadow-md transition-all duration-200 ease-out flex items-center justify-center gap-2"
+                >
+                  <span class="material-symbols-outlined text-[18px]"
+                    >trending_up</span
+                  >
+                  <span>Income</span>
+                </div>
+              </label>
+            </div>
+          </div>
+          <!-- Main Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Amount -->
+            <div class="flex flex-col gap-2">
+              <label class="text-gray-300 text-sm font-medium pl-1"
+                >Amount</label
+              >
+              <div class="relative group">
+                <span
+                  class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-mono text-lg pointer-events-none"
+                  >$</span
+                >
+                <input
+                  id="amount"
+                  class="w-full bg-input-bg border border-input-border rounded-xl h-14 pl-10 pr-4 text-white font-mono text-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-600 hover:border-white/20"
+                  placeholder="0.00"
+                  step="0.01"
+                  type="number"
+                />
+                <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                  <select
+                    id="currency"
+                    class="bg-transparent text-gray-400 text-xs font-medium border-none focus:ring-0 cursor-pointer hover:text-white"
+                  >
+                    <option>USD</option>
+                    <option>EUR</option>
+                    <option>GBP</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <!-- Date -->
+            <div class="flex flex-col gap-2">
+              <label class="text-gray-300 text-sm font-medium pl-1">Date</label>
+              <div class="relative">
+                <input
+                  id="date"
+                  class="w-full bg-input-bg border border-input-border rounded-xl h-14 pl-4 pr-12 text-white font-display focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-600 hover:border-white/20 [color-scheme:dark]"
+                  type="date"
+                />
+                <span
+                  class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  >calendar_today</span
+                >
+              </div>
+            </div>
+            <!-- Category -->
+            <div class="flex flex-col gap-2">
+              <label class="text-gray-300 text-sm font-medium pl-1"
+                >Category</label
+              >
+              <div class="relative">
+                <select
+                  id="category"
+                  class="w-full bg-input-bg border border-input-border rounded-xl h-14 pl-12 pr-10 text-white font-display appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all hover:border-white/20"
+                >
+                  <option disabled="" selected="" value="">
+                    Select Category
+                  </option>
+                  <option value="office">Office Supplies</option>
+                  <option value="travel">Travel &amp; Meals</option>
+                  <option value="software">Software Subscriptions</option>
+                  <option value="marketing">Marketing</option>
+                </select>
+                <span
+                  class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
+                  >category</span
+                >
+                <span
+                  class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                  >expand_more</span
+                >
+              </div>
+            </div>
+            <!-- Party -->
+            <div class="flex flex-col gap-2">
+              <label class="text-gray-300 text-sm font-medium pl-1"
+                >Party / Client</label
+              >
+              <div class="relative">
+                <input
+                  id="party"
+                  class="w-full bg-input-bg border border-input-border rounded-xl h-14 pl-12 pr-4 text-white font-display focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-600 hover:border-white/20"
+                  placeholder="e.g. AWS, Starbucks"
+                  type="text"
+                />
+                <span
+                  class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  >storefront</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- Description -->
+          <div class="flex flex-col gap-2">
+            <label class="text-gray-300 text-sm font-medium pl-1"
+              >Description</label
+            >
+            <textarea
+              id="description"
+              class="w-full bg-input-bg border border-input-border rounded-xl p-4 text-white font-display resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-600 hover:border-white/20"
+              placeholder="Add optional details about this transaction..."
+              rows="3"
+            ></textarea>
+          </div>
+          <!-- Receipt Upload -->
+          <div class="flex flex-col gap-3">
+            <div class="flex justify-between items-end">
+              <label class="text-gray-300 text-sm font-medium pl-1"
+                >Attach Receipt</label
+              >
+            </div>
+            <div
+              id="uploadBox"
+              class="border-2 border-dashed border-white/10 rounded-xl bg-input-bg/30 p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-input-bg/50 hover:border-primary/40 transition-all group relative overflow-hidden"
+            >
+              <!-- Decoration Image inside Dropzone -->
+              <img
+                class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none mix-blend-overlay"
+                data-alt="Abstract subtle light gradient texture"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmUPNpSawO7RCB0ETtI8UE_2HpGE3a_un73dsInK10xMoE7jmeweHIZKXxDYUcu-pz4DjssOBW2V8Z-lPYYthqHazKELzDXqrEAsZ-GKUW5W_H98ExNpz_ZrKjLikeC-XvxT2YrW-MTmCTmvk2AZ-LRcRMpVzcYh2803GbuYc2MFBIrG8cocnUgAo8lPDm7cVZ5j8pNLyqR8adz0JwcUUruM-UJm2wi2PPD4CRFU1us7LQaXeLCd_VFvixhxPD9FAEZ-TmcQoE0GNK"
+              />
+              <div
+                class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300"
+              >
+                <span
+                  class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors"
+                  >upload_file</span
+                >
+              </div>
+              <p class="text-sm text-gray-300 font-medium">
+                Click to upload or drag and drop
+              </p>
+              <p class="text-xs text-gray-500 mt-1">PDF, PNG, JPG (max. 5MB)</p>
+              <!-- hidden file input -->
+              <input
+                type="file"
+                id="receiptInput"
+                accept=".pdf,.png,.jpg,.jpeg"
+                class="hidden"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Footer -->
+        <div
+          class="px-6 md:px-8 py-5 border-t border-white/5 bg-black/20 flex justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-sm"
+        >
+          <button
+            class="px-6 py-3 rounded-xl text-sm font-medium text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-8 py-3 rounded-xl text-sm font-medium text-white bg-primary hover:bg-primary/90 shadow-[0_0_15px_rgba(100,103,242,0.3)] hover:shadow-[0_0_25px_rgba(100,103,242,0.5)] transition-all transform active:scale-95 flex items-center gap-2"
+            type="button"
+            onclick="saveTransaction()"
+          >
+            <span class="material-symbols-outlined text-[18px]">check</span>
+            Save Transaction
+          </button>
+        </div>
+      </form>
+    </div>
+    <!-- ⬇ script UPLOAD FILE dulu -->
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from"); // hasilnya "dashboard" atau "transactions"
+
+      const uploadBox = document.getElementById("uploadBox");
+      const receiptInput = document.getElementById("receiptInput");
+
+      uploadBox.addEventListener("click", function () {
+        receiptInput.click();
+      });
+
+      // opsional tampilkan nama file
+      receiptInput.addEventListener("change", function () {
+        if (receiptInput.files.length > 0) {
+          uploadBox.querySelector("p.text-sm").textContent =
+            "Selected: " + receiptInput.files[0].name;
+        }
+      });
+    </script>
+    <script>
+      async function saveTransaction() {
+        const receiptFile = document.getElementById("receiptInput").files[0];
+
+        const formData = new FormData();
+        formData.append(
+          "type",
+          document.querySelector('input[name="transaction-type"]:checked').value
+        );
+        formData.append("amount", document.getElementById("amount").value);
+        formData.append("currency", document.getElementById("currency").value);
+        formData.append("date", document.getElementById("date").value);
+        formData.append("category", document.getElementById("category").value);
+        formData.append("party", document.getElementById("party").value);
+        formData.append(
+          "description",
+          document.getElementById("description").value
+        );
+
+        if (receiptFile) {
+          formData.append("receipt", receiptFile);
+        }
+
+        const response = await fetch("http://localhost:5000/api/transactions", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          alert("Failed to save! Check server.");
+          return;
+        }
+
+        const result = await response.json();
+        alert("Transaction saved!");
+
+        // cek asal user
+        if (from === "dashboard") {
+          window.location.href = "dashboard.html";
+        } else {
+          window.location.href = "transactions.html";
+        }
+      }
+    </script>
+  </body>
+</html>
