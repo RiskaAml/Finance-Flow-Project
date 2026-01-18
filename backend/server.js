@@ -130,6 +130,31 @@ app.get("/api/transactions", async (req,res) =>{
   } catch (err) {
     res.status(500).json({message: "DB Error", error: err.message});
   }
-})
+});
+
+//masukin kategori dari database ke add transaction untuk milih kategori, tapi kategorinya ada yang untuk expense dan income, jadi nya beda
+app.get("/api/categories/:type", async (req, res) => {
+  try {
+    const { type } = req.params;
+
+    const result = await pool.query(
+      `SELECT id, name
+       FROM categories
+       WHERE LOWER(type) = LOWER($1)
+         AND is_active = TRUE
+       ORDER BY name ASC`,
+      [type]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({
+      message: "DB Error",
+      error: err.message
+    });
+  }
+});
+
+
 // ----------------- START SERVER -----------------
 app.listen(5000, () => console.log("Server running on port 5000..."));

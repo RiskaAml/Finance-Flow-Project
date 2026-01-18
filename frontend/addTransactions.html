@@ -84,12 +84,12 @@
         >
           Add New Transaction
         </h2>
-        <a
-          href="transactions.html"
+        <button
+          onclick="goBack()"
           class="text-gray-400 hover:text-white transition-colors rounded-full p-1 hover:bg-white/5"
         >
           <span class="material-symbols-outlined text-[24px]">close</span>
-        </a>
+        </button>
       </div>
       <form
         class="flex flex-col flex-1 overflow-y-auto max-h-[85vh]"
@@ -195,10 +195,6 @@
                   <option disabled="" selected="" value="">
                     Select Category
                   </option>
-                  <option value="office">Office Supplies</option>
-                  <option value="travel">Travel &amp; Meals</option>
-                  <option value="software">Software Subscriptions</option>
-                  <option value="marketing">Marketing</option>
                 </select>
                 <span
                   class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
@@ -301,6 +297,51 @@
         </div>
       </form>
     </div>
+    <script>
+      const categorySelect = document.getElementById("category");
+      const typeRadios = document.querySelectorAll(
+        'input[name="transaction-type"]'
+      );
+
+      function getSelectedType() {
+        return document.querySelector('input[name="transaction-type"]:checked')
+          .value;
+      }
+
+      async function fetchCategoriesBySelectedType() {
+        const type = getSelectedType();
+        console.log("FETCH CATEGORY TYPE:", type); // 🔥 DEBUG
+
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/categories/${type}`
+          );
+
+          const categories = await response.json();
+
+          categorySelect.innerHTML =
+            '<option value="">Select Category</option>';
+
+          categories.forEach((cat) => {
+            const option = document.createElement("option");
+            option.value = cat.id;
+            option.textContent = cat.name;
+            categorySelect.appendChild(option);
+          });
+        } catch (err) {
+          console.error("Category fetch error:", err);
+        }
+      }
+
+      // 🔥 LOAD AWAL (ikut radio yang checked)
+      fetchCategoriesBySelectedType();
+
+      // 🔥 GANTI TYPE → FETCH ULANG
+      typeRadios.forEach((radio) => {
+        radio.addEventListener("change", fetchCategoriesBySelectedType);
+      });
+    </script>
+
     <!-- ⬇ script UPLOAD FILE dulu -->
     <script>
       const params = new URLSearchParams(window.location.search);
@@ -363,6 +404,11 @@
         } else {
           window.location.href = "transactions.html";
         }
+      }
+    </script>
+    <script>
+      function goBack() {
+        window.history.back();
       }
     </script>
   </body>
